@@ -1,0 +1,32 @@
+{
+  "name": "ninnodoppam",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "async": "^1.5.1",
+    "body-parser": "~1.13.2",
+    "config": "1.19.0",
+    "debug": "~2.2.0",
+    "errorhandler": "^1.4.2",
+    "express": "~4.13.1",
+    "fb": "^0.7.0",
+    "jade": "~1.11.0",
+    "log4js": "^0.6.33",
+    "meteor-random": "0.0.3",
+    "mongoose": "https://registry.npmjs.org/mongoose/-/mongoose-4.3.4.tgz",
+    "mongoose-auto-increment": "^5.0.1",
+    "mongoose-validator": "^1.2.4",
+    "morgan": "~1.6.1",
+    "multer": "^1.1.0",
+    "node-uuid": "1.4.7",
+    "nodemailer": "2.0.0",
+    "serve-favicon": "~2.3.0",
+    "sha1": "^1.1.1"
+  },
+  "devDependencies": {
+    "supervisor": "^0.7.1"
+  }
+}

@@ -1,0 +1,21 @@
+{
+    "URL": {
+        "DOMAIN": "http://strangefriend.com",
+        "ROOT_URL": "http://services.strangefriend.com/v1",
+        "PORT": "80"
+    },
+    "NUMBERS": {
+        "EMAIL_VERIFICATION_DELAY": 3600000,
+        "SMS_VERIFICATION_DELAY": 600000
+    },
+    "DATABASE": {
+        "Host": "127.0.0.1",
+        "User": "",
+        "Password": "",
+        "Name": "democracy",
+        "Port": "27017"
+    },
+    "API_KEYS": {
+        "MANDRILL": "ccc"
+    }
+}
