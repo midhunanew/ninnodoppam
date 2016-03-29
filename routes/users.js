@@ -31,7 +31,13 @@ router.get('/verify/:id', function (req, res, next) {
 
 //facebook callback
 router.post('/fbcallback', function (req, res, next) {
-    console.log("verify link in users router");
+    console.log("receive fb details in users router");
+    users.facebookAccess(req, res, next);
+});
+
+//check facebook callback
+router.get('/fbcallback/:token', function (req, res, next) {
+    console.log("verify receive fb details in users router");
     users.facebookAccess(req, res, next);
 });
 

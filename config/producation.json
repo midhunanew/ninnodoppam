@@ -10,8 +10,8 @@
     },
     "DATABASE": {
         "Host": "127.0.0.1",
-        "User": "",
-        "Password": "",
+        "User": "XXXXXXXXXX",
+        "Password": "**********",
         "Name": "democracy",
         "Port": "27017"
     },

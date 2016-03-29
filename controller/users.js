@@ -436,6 +436,10 @@ module.exports = {
      **/
     facebookAccess: function (req, res) {
         var accessToken = req.body.access_token;
+
+        if(!accessToken){
+            accessToken = req.params.token;
+        }
         var result = {};
         if (accessToken) {
             logger.info("facebookAccess " + accessToken);
