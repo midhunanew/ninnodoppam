@@ -243,7 +243,7 @@ module.exports = {
 
                         console.log("try here");
                         // send to list
-                        var to = ['midhunanew@gmail.com'];
+                        var to = [req.body.data.email];
                         // this must relate to a verified SES account
                         var from = stringConf.SES_VERIFIED_EMAIL;
                         // this sends the email
