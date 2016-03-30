@@ -15,7 +15,11 @@
         "Name": "democracy",
         "Port": "27017"
     },
-    "API_KEYS": {
-        "MANDRILL": "ccc"
+    "SECRETS": {
+        "MANDRILL": "ccc",
+        "SES_ACCESS_KEY_ID": "XXXXXXXXXXXXXXXXXXXX",
+        "SES_SECRET_ACCESS_KEY": "XXXXXXxxxxxXXXXXXxxxxxXXXXXXXX",
+        "SES_REGION": "https://email.au-west-7.amazonaws.com",
+        "SES_VERIFIED_EMAIL": "Strange Friend <noreply@strangefriend.com>"
     }
 }

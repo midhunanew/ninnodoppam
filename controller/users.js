@@ -6,6 +6,7 @@ const uuid = require('node-uuid');//generate token
 const sha1 = require('sha1');//create hash of token
 //var graph = require('fbgraph');
 var FB = require('fb');
+var ses = require('node-ses');
 
 var path = require('path');
 var cwd = path.join(__dirname, "../");
@@ -16,13 +17,13 @@ var otpCollection = require(otp);
 var userCollection = require(user);
 
 /*var crypto = require('crypto'),//password encryption
- authConf = config.get('auth'),
+ secretConf = config.get('auth'),
  async = require('async'),
  ses = require('node-ses'),
  mailClient = ses.createClient({
- key: authConf.SES_ACCESS_KEY_ID,
- secret: authConf.SES_SECRET_ACCESS_KEY,
- amazon: authConf.SES_REGION
+ key: secretConf.SES_ACCESS_KEY_ID,
+ secret: secretConf.SES_SECRET_ACCESS_KEY,
+ amazon: secretConf.SES_REGION
  }),
 
 
@@ -71,7 +72,14 @@ var userCollection = require(user);
 
 var config = require('config'),
     domainConf = config.get('URL'),
-    numberConf = config.get('NUMBERS');
+    numberConf = config.get('NUMBERS'),
+    secretConf = config.get('SECRETS');
+
+var mailClient = ses.createClient({
+    key: secretConf.SES_ACCESS_KEY_ID,
+    secret: secretConf.SES_SECRET_ACCESS_KEY,
+    amazon: secretConf.SES_REGION
+});
 
 const Random = require('meteor-random');
 const crypto = require('crypto');
@@ -221,6 +229,9 @@ module.exports = {
     sendEmail: function (req, res, next) {
         if (req.body.data && req.body.data.email) {
             createNewOTP(req.body.data.email, 'email', function (err, otpDoc) {
+
+                var verificationLink, mailContent;
+
                 if (err) {
                     console.log(err);
                     res.send({status: false, error: true, message: "db error occurred", data: req.body.data});
@@ -230,17 +241,82 @@ module.exports = {
                     if (otpDoc) {
                         //that's cool
                         logger.warn("don't forget to send OTP! and mark status as 'send'");
-                        logger.info(domainConf.ROOT_URL + "/users/verify/" + otpDoc.hash);
-                        res.send({
-                            status: true,
-                            error: false,
-                            message: "please open the link you received on " + req.body.data.email,
-                            data: {
-                                phone: req.body.data.phone,
-                                verify: otpDoc._id,
-                                type: "phone"
+                        verificationLink = domainConf.ROOT_URL + "/users/verify/" + otpDoc.hash;
+                        mailContent = "Please click the link below to verify your email:<br/>" + verificationLink;
+
+                        var AWS = require('aws-sdk');
+                        AWS.config.loadFromPath('./config.json');
+
+                        var ses = new AWS.SES();
+
+
+                        console.log("try here");
+                        // send to list
+                        var to = ['midhunanew@gmail.com'];
+                        // this must relate to a verified SES account
+                        var from = 'Strange Friend <no-reply@strangefriend.com>';
+                        // this sends the email
+
+                        ses.sendEmail({
+                                Source: from,
+                                Destination: { ToAddresses: to },
+                                Message: {
+                                    Subject: {
+                                        Data: 'Confirm your email'
+                                    },
+                                    Body: {
+                                        Html: {
+                                            Data: mailContent
+                                        },
+                                        Text: {
+                                            Data: verificationLink //plain text email content
+                                        }
+                                    }
+                                }
                             }
+                            , function (err, data) {
+                                if (err) console.log(err, err.stack); // an error occurred
+                                else     console.log(data);           // successful response
+
+                                if (err) {
+                                    console.log('error');
+                                    console.log(err);
+                                    res.send({status: false, error: err, message: 'mail sending failed'});
+                                }
+                                else {
+                                    console.log('mail sent, data here');
+                                    console.log(data);
+
+                                    logger.info(domainConf.ROOT_URL + "/users/verify/" + otpDoc.hash);
+                                    res.send({
+                                        status: true,
+                                        error: false,
+                                        message: "please open the link you received on " + req.body.data.email,
+                                        data: {
+                                            phone: req.body.data.phone,
+                                            verify: otpDoc._id,
+                                            type: "phone"
+                                        }
+                                    });
+                                }
+
+                            });
+
+
+                        console.log(mailContent, "mailContent " + secretConf.SES_VERIFIED_EMAIL);
+                        mailClient.sendEmail({
+                            to: "midhunanew@gmail.com",
+                            from: "midhunanew@gmail.com",
+                            subject: 'Confirm your email',
+                            message: mailContent,
+                            altText: verificationLink //plain text email content
+                        }, function (err, data, mailRes) {
+                            console.log("mailRes");
+                            console.log(mailRes);
+
                         });
+                        console.log("mailClient");
+                        console.log(mailClient);
                     }
                     else {
                         res.send({status: false, error: true, message: "db error occurred", data: req.body.data});
@@ -437,7 +513,7 @@ module.exports = {
     facebookAccess: function (req, res) {
         var accessToken = req.body.access_token;
 
-        if(!accessToken){
+        if (!accessToken) {
             accessToken = req.params.token;
         }
         var result = {};
