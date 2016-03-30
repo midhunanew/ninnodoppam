@@ -8,18 +8,14 @@
         "EMAIL_VERIFICATION_DELAY": 3600000,
         "SMS_VERIFICATION_DELAY": 600000
     },
+    "STRINGS": {
+        "SES_VERIFIED_EMAIL": "Strange Friend <noreply@strangefriend.com>"
+    },
     "DATABASE": {
         "Host": "127.0.0.1",
         "User": "",
         "Password": "",
         "Name": "democracy",
         "Port": "27017"
-    },
-    "SECRETS": {
-        "MANDRILL": "ccc",
-        "SES_ACCESS_KEY_ID": "XXXXXXXXXXXXXXXXXXXX",
-        "SES_SECRET_ACCESS_KEY": "XXXXXXxxxxxXXXXXXxxxxxXXXXXXXX",
-        "SES_REGION": "https://email.au-west-7.amazonaws.com",
-        "SES_VERIFIED_EMAIL": "Strange Friend <noreply@strangefriend.com>"
     }
 }

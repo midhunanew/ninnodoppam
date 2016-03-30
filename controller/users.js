@@ -6,7 +6,6 @@ const uuid = require('node-uuid');//generate token
 const sha1 = require('sha1');//create hash of token
 //var graph = require('fbgraph');
 var FB = require('fb');
-var ses = require('node-ses');
 
 var path = require('path');
 var cwd = path.join(__dirname, "../");
@@ -17,15 +16,6 @@ var otpCollection = require(otp);
 var userCollection = require(user);
 
 /*var crypto = require('crypto'),//password encryption
- secretConf = config.get('auth'),
- async = require('async'),
- ses = require('node-ses'),
- mailClient = ses.createClient({
- key: secretConf.SES_ACCESS_KEY_ID,
- secret: secretConf.SES_SECRET_ACCESS_KEY,
- amazon: secretConf.SES_REGION
- }),
-
 
  function encryptPass(password) {
  if (password) {
@@ -73,13 +63,21 @@ var userCollection = require(user);
 var config = require('config'),
     domainConf = config.get('URL'),
     numberConf = config.get('NUMBERS'),
-    secretConf = config.get('SECRETS');
+    stringConf = config.get('STRINGS');
 
-var mailClient = ses.createClient({
-    key: secretConf.SES_ACCESS_KEY_ID,
-    secret: secretConf.SES_SECRET_ACCESS_KEY,
-    amazon: secretConf.SES_REGION
-});
+
+var AWS = require('aws-sdk');
+AWS.config.loadFromPath('./ignore/ses.json');
+
+
+var ses = new AWS.SES();
+
+if (process.env.NODE_ENV !== 'production') {
+    ses.sendEmail = function (data, cb) {
+        logger.warn("No email is being sent, see console / log to use the verification link");
+        cb(null, {"success": "you saved one email"});
+    }
+}
 
 const Random = require('meteor-random');
 const crypto = require('crypto');
@@ -237,24 +235,17 @@ module.exports = {
                     res.send({status: false, error: true, message: "db error occurred", data: req.body.data});
                 }
                 else {
-                    //todo - don't forget to send OTP! and mark status as "send"
+                    //todo - in HTML, add sliced images from server with style float to display message in Native.
                     if (otpDoc) {
                         //that's cool
-                        logger.warn("don't forget to send OTP! and mark status as 'send'");
                         verificationLink = domainConf.ROOT_URL + "/users/verify/" + otpDoc.hash;
                         mailContent = "Please click the link below to verify your email:<br/>" + verificationLink;
-
-                        var AWS = require('aws-sdk');
-                        AWS.config.loadFromPath('./config.json');
-
-                        var ses = new AWS.SES();
-
 
                         console.log("try here");
                         // send to list
                         var to = ['midhunanew@gmail.com'];
                         // this must relate to a verified SES account
-                        var from = 'Strange Friend <no-reply@strangefriend.com>';
+                        var from = stringConf.SES_VERIFIED_EMAIL;
                         // this sends the email
 
                         ses.sendEmail({
@@ -287,36 +278,39 @@ module.exports = {
                                     console.log('mail sent, data here');
                                     console.log(data);
 
-                                    logger.info(domainConf.ROOT_URL + "/users/verify/" + otpDoc.hash);
-                                    res.send({
-                                        status: true,
-                                        error: false,
-                                        message: "please open the link you received on " + req.body.data.email,
-                                        data: {
-                                            phone: req.body.data.phone,
-                                            verify: otpDoc._id,
-                                            type: "phone"
+                                    logger.info("email - " + req.body.data.email + " : " + verificationLink);
+
+                                    var query = {_id: otpDoc._id};
+                                    console.log("query");
+                                    console.log(query);
+                                    var options = {new: true};
+                                    var updateQuery = {$set: {
+                                        status: "send"
+                                    }};
+                                    console.log("updateQuery");
+                                    console.log(updateQuery);
+                                    otpCollection.findOneAndUpdate(query, updateQuery, options, function (err, assumes) {
+                                        if (err) {
+                                            logger.info("updating status failed for email - " + req.body.data.email);
+                                            console.log('error');
+                                            console.log(err);
+                                        }
+                                        else {
+                                            res.send({
+                                                status: true,
+                                                error: false,
+                                                message: "please open the link you received on " + req.body.data.email,
+                                                data: {
+                                                    email: req.body.data.email,
+                                                    verify: otpDoc._id,
+                                                    type: "email"
+                                                }
+                                            });
                                         }
                                     });
                                 }
 
                             });
-
-
-                        console.log(mailContent, "mailContent " + secretConf.SES_VERIFIED_EMAIL);
-                        mailClient.sendEmail({
-                            to: "midhunanew@gmail.com",
-                            from: "midhunanew@gmail.com",
-                            subject: 'Confirm your email',
-                            message: mailContent,
-                            altText: verificationLink //plain text email content
-                        }, function (err, data, mailRes) {
-                            console.log("mailRes");
-                            console.log(mailRes);
-
-                        });
-                        console.log("mailClient");
-                        console.log(mailClient);
                     }
                     else {
                         res.send({status: false, error: true, message: "db error occurred", data: req.body.data});
@@ -353,40 +347,54 @@ module.exports = {
                                     }
                                 ]
                             };
+
+                            //handling if the email / phone was already verified - !!!
+
                             if (otpDoc.type === 'email') {
                                 userData.email = otpDoc.email;
+                                query = {email: otpDoc.email};
                             }
                             else {
                                 userData.phone = otpDoc.phone;
+                                query = {phone: otpDoc.phone};
                             }
-                            var userDoc = new userCollection(userData);
-                            userDoc.save(function (err, userData) {
-                                if (err) {
-                                    res.redirect('/err.html');
-                                }
-                                else {
-                                    query = {hash: req.params.id, status: "send", userId: userData._id};
-                                    options = {new: true};
-                                    updateQuery = {
-                                        $set: {
-                                            status: "verified"
-                                        }
-                                    };
-                                    otpCollection.findOneAndUpdate(query, updateQuery, options,
-                                        function (err, otpDoc2) {
-                                            if (err) {
-                                                res.redirect('/err.html');
+
+                            options = {new: true, upsert: true};
+                            updateQuery = {
+                                $set: userData
+                            };
+                            userCollection.findOneAndUpdate(query, updateQuery, options,
+                                function (err, userData) {
+                                    if (err) {
+                                        console.log(err);
+                                        res.redirect('/err.html');
+                                    }
+                                    else {
+                                        query = {hash: req.params.id, status: "send"};
+                                        options = {new: true};
+                                        updateQuery = {
+                                            $set: {
+                                                status: "verified",
+                                                userId: userData._id
                                             }
-                                            else {
-                                                res.redirect('/quotes.html');
+                                        };
+                                        otpCollection.findOneAndUpdate(query, updateQuery, options,
+                                            function (err, assumes) {
+                                                if (err) {
+                                                    res.redirect('/err.html');
+                                                }
+                                                else {
+                                                    res.redirect('/quotes.html');
+                                                }
                                             }
-                                        }
-                                    );
+                                        );
+                                    }
                                 }
-                            });
+                            );
                         }
                     }
                     else {
+                        console.log("not found");
                         res.redirect('/err.html');
                     }
                 }
@@ -395,6 +403,7 @@ module.exports = {
         else {
             // bad request
             //res.status(400).send({status: false, error: null, message: "validation failed"});
+            console.log("validation failed");
             res.redirect('/err.html');
         }
     },

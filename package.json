@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "async": "^1.5.1",
+    "aws-sdk": "^2.2.48",
     "body-parser": "~1.13.2",
     "config": "1.19.0",
     "debug": "~2.2.0",
@@ -21,7 +22,6 @@
     "mongoose-validator": "^1.2.4",
     "morgan": "~1.6.1",
     "multer": "^1.1.0",
-    "node-ses": "^1.1.0",
     "node-uuid": "1.4.7",
     "nodemailer": "2.0.0",
     "serve-favicon": "~2.3.0",
