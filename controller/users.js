@@ -202,14 +202,35 @@ module.exports = {
                         //that's cool
                         console.log("create Link with " + otpDoc.hash);
                         console.log(domainConf.ROOT_URL + "/users/verify/" + otpDoc.hash);
-                        res.send({
-                            status: true,
-                            error: false,
-                            message: "please open the link you received on " + req.body.data.phone,
-                            data: {
-                                phone: req.body.data.phone,
-                                verify: otpDoc._id,
-                                type: "phone"
+
+                        logger.info("phone - " + req.body.data.phone + " : " + verificationLink);
+
+                        var query = {_id: otpDoc._id};
+                        console.log("query");
+                        console.log(query);
+                        var options = {new: true};
+                        var updateQuery = {$set: {
+                            status: "verified"
+                        }};
+                        console.log("updateQuery");
+                        console.log(updateQuery);
+                        otpCollection.findOneAndUpdate(query, updateQuery, options, function (err, assumes) {
+                            if (err) {
+                                logger.info("updating status failed for phone - " + req.body.data.phone);
+                                console.log('error');
+                                console.log(err);
+                            }
+                            else {
+                                res.send({
+                                    status: true,
+                                    error: false,
+                                    message: "please open the link you received on " + req.body.data.phone,
+                                    data: {
+                                        phone: req.body.data.phone,
+                                        verify: otpDoc._id,
+                                        type: "phone"
+                                    }
+                                });
                             }
                         });
                     }
