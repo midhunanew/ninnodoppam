@@ -192,6 +192,9 @@ module.exports = {
         console.log(req.body);
         if (req.body.data && req.body.data.phone) {
             createNewOTP(req.body.data.phone, 'phone', function (err, otpDoc) {
+
+                var verificationLink;
+
                 if (err) {
                     console.log(err);
                     res.send({status: false, error: true, message: "db error occurred", data: req.body.data});
