@@ -575,7 +575,7 @@ module.exports = {
                         if (!response.email) {
                             responded = true;
                             logger.warn("no email id present in user data of fb account " + response.name);
-                            status = {status: false, error: "നിങ്ങളുടെ അക്കൗണ്ടിൽ ഇമെയിൽ ലഭ്യമല്ല!"};
+                            status = {status: false, error:"no email found in user data", message: "നിങ്ങളുടെ അക്കൗണ്ടിൽ ഇമെയിൽ ലഭ്യമല്ല!"};
                             res.send(status);
                         }
 
