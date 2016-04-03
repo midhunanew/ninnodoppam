@@ -9,7 +9,8 @@
         "SMS_VERIFICATION_DELAY": 600000
     },
     "STRINGS": {
-        "SES_VERIFIED_EMAIL": "Strange Friend <noreply@strangefriend.com>"
+        "SES_VERIFIED_EMAIL": "Strange Friend <noreply@strangefriend.com>",
+        "ADMIN_EMAILS": "admin1@any.com, admin2@example.org"
     },
     "DATABASE": {
         "Host": "127.0.0.1",

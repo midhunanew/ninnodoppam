@@ -6,6 +6,64 @@ var complaint = cwd + 'model/complaints';
 var counters = cwd + 'model/counters';
 var complaintCollection = require(complaint);
 var countersCollection = require(counters);
+var AWS = require('aws-sdk');
+AWS.config.loadFromPath('./ignore/ses.json');
+var ses = new AWS.SES();
+
+if (process.env.NODE_ENV !== 'production') {
+    ses.sendEmail = function (data, cb) {
+        logger.warn("No email is being sent, see console / log to use the verification link");
+        cb(null, {"success": "you saved one email"});
+    }
+}
+
+var config = require('config'),
+stringConf = config.get('STRINGS');
+
+function alertAdmins(mailContent){
+
+
+    console.log("try here");
+    // send to list
+    var to = [stringConf.ADMIN_EMAILS];
+    // this must relate to a verified SES account
+    var from = stringConf.SES_VERIFIED_EMAIL;
+    // this sends the email
+
+    ses.sendEmail({
+            Source: from,
+            Destination: { ToAddresses: to },
+            Message: {
+                Subject: {
+                    Data: 'Act Immediately'
+                },
+                Body: {
+                    Html: {
+                        Data: '<h1>'+mailContent+'</h1>'
+                    },
+                    Text: {
+                        Data: mailContent //plain text email content
+                    }
+                }
+            }
+        }
+        , function (err, data) {
+            if (err) console.log(err, err.stack); // an error occurred
+            else     console.log(data);           // successful response
+
+            if (err) {
+                console.log('error');
+                console.log(err);
+            }
+            else {
+                console.log('mail sent, data here');
+                console.log(data);
+
+                logger.info("emails - " + to + " : " + mailContent);
+            }
+
+        });
+}
 
 module.exports = {
     create: function (req, res, next) {
@@ -44,6 +102,7 @@ module.exports = {
                     res.send({status: false, error: true, message: "db error occurred", data: req.body.data});
                 }
                 else {
+                    if(countersDoc){
                     console.log("countersDoc.seq");
                     console.log(countersDoc.seq);
                     console.log(typeof countersDoc.seq);
@@ -91,8 +150,8 @@ module.exports = {
                             });
                         },
                         function (err, n) {
-                            console.log("err,n")
-                            console.log(err, n)
+                            console.log("err,n");
+                            console.log(err, n);
                             if (err) {
                                 res.send({status: false, error: true, message: "db error occurred", data: req.body.data});
                             }
@@ -113,6 +172,11 @@ module.exports = {
                             }
                         }
                     );
+                    }
+                    else{
+                        alertAdmins('complaint counter missing');
+                        res.send({status: false, error: true, message: "db error occurred", data: req.body.data});
+                    }
                 }
             });
         }
