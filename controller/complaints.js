@@ -17,6 +17,8 @@ if (process.env.NODE_ENV !== 'production') {
     }
 }
 
+var logger = require('../core/logger').logger();
+
 var config = require('config'),
 stringConf = config.get('STRINGS');
 
@@ -175,6 +177,8 @@ module.exports = {
                     }
                     else{
                         alertAdmins('complaint counter missing');
+                        logger.warn("complaint saving failed");
+                        logger.info(req.body.data);
                         res.send({status: false, error: true, message: "db error occurred", data: req.body.data});
                     }
                 }
